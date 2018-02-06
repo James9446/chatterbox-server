@@ -11,6 +11,23 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
+const querystring = require('querystring');
+
+var defaultCorsHeaders = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'access-control-allow-headers': 'content-type, accept',
+  'access-control-max-age': 10 // Seconds.
+};
+
+// {
+//       username: 'Eric',
+//       text: 'Here I am'
+//     }, {
+//       username: 'James',
+//       text: 'There you are'
+//     }
+
 var classesDirectory = {
   messages: [],
   room: []
@@ -54,6 +71,14 @@ exports.requestHandler = function(request, response) {
   var responseObj = {
     results: []
   };
+  
+  // OPTIONS
+  if (request.method === 'OPTIONS') {
+    headers['Allow'] = 'GET, POST, OPTIONS';
+    response.writeHead(statusCode, headers);
+    response.end('Options request ended');
+  }
+
 
   // GET
   if (request.method === 'GET') {
@@ -64,55 +89,35 @@ exports.requestHandler = function(request, response) {
       responseObj.results = classesDirectory.messages;
       response.end(JSON.stringify(responseObj));
 
-    } else  if (request.url === '/classes/room') {
+    } else if (request.url === '/classes/room') {
       responseObj.results = classesDirectory.room;
       response.end(JSON.stringify(responseObj));
     } else {
-      response.end('no url specified')
+      // general comms connection
+      responseObj.results = classesDirectory.messages;
+      response.end(JSON.stringify(responseObj));
     }
   }
 
   // POST 
   if (request.method === 'POST') {
+    var body = [];
     statusCode = 201;
     response.writeHead(statusCode, headers);
     
-    if (request.url === '/classes/messages') {
-      // add first 100 messages that meet parameters?
-      var body = [];
-        request.on('data', (chunk) => {
-          body = Buffer.concat([chunk]).toString();
-          classesDirectory.messages.push(body);
-          console.log(body);
-          response.end();
-        })
-        // what to send back here?
-        
-
-    } 
-    // else  if (request.url === '/classes/room') {
-    //     var body = [];
-    //     request.on('data', (chunk) => {
-    //       body.push(chunk);
-    //     }).on('end', () => {
-    //       body = Buffer.concat(body).toString();
-    //       classesDirectory.room.push(body);
-    //     })
-    //     // what to send back here?
-    //     console.log('Inside classes/rooms')
-    //     response.end();
-    // }
-
-    // var body = [];
-    // request.on('data', (chunk) => {
-    //   body.push(chunk);
-    // }).on('end', () => {
-    //   body = Buffer.concat(body).toString();
-    //   classesDirectory.messages.push(body);
-    // })
-
-    // what to send back here?
-    // response.end();
+    request.on('data', (chunk) => {
+      body.push(Buffer(chunk));
+    });
+    request.on('end', () => {
+      body = Buffer.concat(body).toString();
+      // body = querystring.parse(body);
+      body = JSON.parse(body);
+      console.log('querystring.parse body:', body);
+      classesDirectory.messages.push(body);
+      console.log('server data: ', classesDirectory.messages);
+      console.log('headers:', headers);
+      response.end();
+    });
   }
 
   // Make sure to always call response.end() - Node may not send
@@ -134,10 +139,5 @@ exports.requestHandler = function(request, response) {
 //
 // Another way to get around this restriction is to serve you chat
 // client from this domain by setting up static file serving.
-var defaultCorsHeaders = {
-  'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'access-control-allow-headers': 'content-type, accept',
-  'access-control-max-age': 10 // Seconds.
-};
+
 
