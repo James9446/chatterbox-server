@@ -11,8 +11,14 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
+var classesDirectory = {
+  messages: [],
+  room: []
+};
 
-var requestHandler = function(request, response) {
+var exports = module.exports = {};
+
+exports.requestHandler = function(request, response) {
   // Request and Response come from node's http module.
   //
   // They include information about both the incoming request, such as
@@ -39,11 +45,75 @@ var requestHandler = function(request, response) {
   //
   // You will need to change this if you are sending something
   // other than plain text, like JSON or HTML.
-  headers['Content-Type'] = 'text/plain';
+  headers['Content-Type'] = 'application/json';
 
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
-  response.writeHead(statusCode, headers);
+
+  // RESPONSE LOGIC 
+  var responseObj = {
+    results: []
+  };
+
+  // GET
+  if (request.method === 'GET') {
+    response.writeHead(statusCode, headers);
+
+    if (request.url === '/classes/messages') {
+      // add first 100 messages that meet parameters?
+      responseObj.results = classesDirectory.messages;
+      response.end(JSON.stringify(responseObj));
+
+    } else  if (request.url === '/classes/room') {
+      responseObj.results = classesDirectory.room;
+      response.end(JSON.stringify(responseObj));
+    } else {
+      response.end('no url specified')
+    }
+  }
+
+  // POST 
+  if (request.method === 'POST') {
+    statusCode = 201;
+    response.writeHead(statusCode, headers);
+    
+    if (request.url === '/classes/messages') {
+      // add first 100 messages that meet parameters?
+      var body = [];
+        request.on('data', (chunk) => {
+          body = Buffer.concat([chunk]).toString();
+          classesDirectory.messages.push(body);
+          console.log(body);
+          response.end();
+        })
+        // what to send back here?
+        
+
+    } 
+    // else  if (request.url === '/classes/room') {
+    //     var body = [];
+    //     request.on('data', (chunk) => {
+    //       body.push(chunk);
+    //     }).on('end', () => {
+    //       body = Buffer.concat(body).toString();
+    //       classesDirectory.room.push(body);
+    //     })
+    //     // what to send back here?
+    //     console.log('Inside classes/rooms')
+    //     response.end();
+    // }
+
+    // var body = [];
+    // request.on('data', (chunk) => {
+    //   body.push(chunk);
+    // }).on('end', () => {
+    //   body = Buffer.concat(body).toString();
+    //   classesDirectory.messages.push(body);
+    // })
+
+    // what to send back here?
+    // response.end();
+  }
 
   // Make sure to always call response.end() - Node may not send
   // anything back to the client until you do. The string you pass to
@@ -52,7 +122,7 @@ var requestHandler = function(request, response) {
   //
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
-  response.end('Hello, World!');
+  // response.end(JSON.stringify(responseObj));
 };
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).
