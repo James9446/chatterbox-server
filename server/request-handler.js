@@ -30,7 +30,7 @@ var defaultCorsHeaders = {
 
 var classesDirectory = {
   messages: [],
-  room: []
+  lobby: []
 };
 
 var exports = module.exports = {};
@@ -82,21 +82,19 @@ exports.requestHandler = function(request, response) {
 
   // GET
   if (request.method === 'GET') {
-    response.writeHead(statusCode, headers);
-
-    if (request.url === '/classes/messages') {
-      // add first 100 messages that meet parameters?
+    // look for request.url in classesDirectory
+    if (request.url.includes('/classes') || request.url.includes('createdAt')) {
+      // if there - do the thing
+      response.writeHead(statusCode, headers);
       responseObj.results = classesDirectory.messages;
-      response.end(JSON.stringify(responseObj));
-
-    } else if (request.url === '/classes/room') {
-      responseObj.results = classesDirectory.room;
       response.end(JSON.stringify(responseObj));
     } else {
-      // general comms connection
-      responseObj.results = classesDirectory.messages;
-      response.end(JSON.stringify(responseObj));
+    // if not, 404 not found
+      statusCode = 404;
+      response.writeHead(statusCode, headers);
+      response.end();
     }
+    //}
   }
 
   // POST 
