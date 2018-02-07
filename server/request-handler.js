@@ -29,7 +29,13 @@ var defaultCorsHeaders = {
 //     }
 
 var classesDirectory = {
-  messages: [],
+  messages: [{
+    username: 'Eric',
+    text: 'Here I am'
+  }, {
+    username: 'James',
+    text: 'There you are'
+  }],
   lobby: []
 };
 
@@ -110,11 +116,10 @@ exports.requestHandler = function(request, response) {
       body = Buffer.concat(body).toString();
       // body = querystring.parse(body);
       body = JSON.parse(body);
-      console.log('querystring.parse body:', body);
-      classesDirectory.messages.push(body);
-      console.log('server data: ', classesDirectory.messages);
-      console.log('headers:', headers);
-      response.end();
+      classesDirectory.messages.unshift(body);
+      // console.log('server data: ', classesDirectory.messages);
+      // console.log('headers:', headers);
+      response.end(JSON.stringify({}));
     });
   }
 
